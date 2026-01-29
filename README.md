@@ -1,26 +1,23 @@
 # IoT Sensor Temperature Backend Service
 
-A Node.js backend service that ingests IoT sensor temperature readings, persists them to MongoDB Atlas, and exposes REST API endpoints to retrieve sensor data. Includes bonus MQTT subscriber functionality for real-time sensor data ingestion.
+A Node.js backend service that ingests IoT sensor temperature readings, persists them to MongoDB Atlas, and exposes REST API endpoints to retrieve sensor data.
 
-## 🚀 Features
+## Features
 
 - ✅ **POST /api/sensor/ingest** - Ingest sensor temperature readings with validation
 - ✅ **GET /api/sensor/:deviceId/latest** - Retrieve latest reading for a device
 - ✅ MongoDB Atlas integration with Mongoose ODM
 - ✅ Input validation for required fields (deviceId, temperature)
 - ✅ Automatic timestamp handling (defaults to current time if missing)
-- ✅ MQTT subscriber for real-time sensor data (Bonus Feature)
 - ✅ Comprehensive error handling
-- ✅ Health check endpoint
 
-## 📋 Prerequisites
+## Prerequisites
 
-- **Node.js** 18+ or 20 LTS (recommended: Node.js 20 LTS)
+- **Node.js** 18+ or 20 LTS
 - **MongoDB Atlas** account (free tier)
-- **npm** or **yarn** package manager
-- (Optional) MQTT broker for bonus feature
+- **npm** package manager
 
-## 🛠️ Installation
+## Installation
 
 ### Step 1: Clone the Repository
 
@@ -34,14 +31,6 @@ cd iot-sensor-backend
 ```bash
 npm install
 ```
-
-This will install all required packages:
-- `express` - Web framework
-- `mongoose` - MongoDB ODM
-- `express-validator` - Input validation
-- `dotenv` - Environment variables
-- `mqtt` - MQTT client (bonus feature)
-- `nodemon` - Development auto-reload (dev dependency)
 
 ### Step 3: Configure Environment Variables
 
@@ -72,8 +61,7 @@ This will install all required packages:
    - Set privileges to "Atlas admin" or "Read and write to any database"
 4. **Configure Network Access:**
    - Go to "Network Access" → "Add IP Address"
-   - For development: Click "Allow Access from Anywhere" (0.0.0.0/0)
-   - For production: Use specific IP addresses
+   - Click "Allow Access from Anywhere" (0.0.0.0/0) for development
 5. **Get Connection String:**
    - Go to "Database" → Click "Connect" on your cluster
    - Choose "Connect your application"
@@ -92,18 +80,16 @@ mongodb+srv://myuser:mypassword@cluster0.xxxxx.mongodb.net/iot-sensors?retryWrit
 - `#` becomes `%23`
 - `:` becomes `%3A`
 
-## ▶️ Running the Application
-
-### Development Mode (with auto-reload)
-
-```bash
-npm run dev
-```
-
-### Production Mode
+## Running the Application
 
 ```bash
 npm start
+```
+
+Or for development with auto-reload:
+
+```bash
+npm run dev
 ```
 
 The server will start on `http://localhost:3000` (or the port specified in `.env`).
@@ -116,13 +102,11 @@ Environment: development
 Health check: http://localhost:3000/health
 ```
 
-## 📡 API Endpoints
+## API Endpoints
 
 ### Health Check
 
 **Endpoint:** `GET /health`
-
-**Description:** Check if the server is running.
 
 **cURL Example:**
 ```bash
@@ -143,8 +127,6 @@ curl http://localhost:3000/health
 ### Ingest Sensor Reading
 
 **Endpoint:** `POST /api/sensor/ingest`
-
-**Description:** Ingest a new sensor temperature reading. Validates required fields and persists to MongoDB.
 
 **Request Body:**
 ```json
@@ -223,27 +205,11 @@ Invoke-WebRequest -Uri http://localhost:3000/api/sensor/ingest -Method POST -Bod
 }
 ```
 
-**Example - Missing deviceId:**
-```bash
-curl -X POST http://localhost:3000/api/sensor/ingest \
-  -H "Content-Type: application/json" \
-  -d '{"temperature": 25.5}'
-```
-
-**Example - Invalid temperature:**
-```bash
-curl -X POST http://localhost:3000/api/sensor/ingest \
-  -H "Content-Type: application/json" \
-  -d '{"deviceId": "sensor-01", "temperature": "invalid"}'
-```
-
 ---
 
 ### Get Latest Reading
 
 **Endpoint:** `GET /api/sensor/:deviceId/latest`
-
-**Description:** Retrieve the latest temperature reading for a specific device.
 
 **URL Parameters:**
 - `deviceId` (string, required) - The device ID to query
@@ -280,25 +246,15 @@ Invoke-WebRequest -Uri http://localhost:3000/api/sensor/sensor-01/latest -UseBas
 }
 ```
 
-**Example - Non-existent device:**
-```bash
-curl http://localhost:3000/api/sensor/non-existent-device/latest
-```
-
 ---
 
-## 📮 Postman Collection
+## Postman Collection
 
 ### Setting Up Postman
 
 1. **Download Postman** from [https://www.postman.com/downloads/](https://www.postman.com/downloads/)
 
 2. **Create a new Collection:** "IoT Sensor API"
-
-3. **Add Environment Variables** (optional but recommended):
-   - Variable: `base_url`
-   - Initial Value: `http://localhost:3000`
-   - Use `{{base_url}}` in requests
 
 ### Request Examples
 
@@ -367,88 +323,7 @@ curl http://localhost:3000/api/sensor/non-existent-device/latest
 
 ---
 
-## 🔔 MQTT Integration (Bonus Feature)
-
-The service includes an MQTT subscriber that automatically ingests sensor readings from MQTT topics.
-
-### Topic Pattern
-
-```
-iot/sensor/<deviceId>/temperature
-```
-
-**Example topics:**
-- `iot/sensor/sensor-01/temperature`
-- `iot/sensor/sensor-02/temperature`
-- `iot/sensor/device-123/temperature`
-
-### Message Format
-
-The MQTT message payload should be JSON:
-
-```json
-{
-  "temperature": 32.1,
-  "timestamp": 1705312440000
-}
-```
-
-**Note:** `timestamp` is optional. If not provided, the server will use the current time.
-
-### Configuration
-
-Add MQTT broker details to your `.env` file:
-
-```env
-MQTT_BROKER_URL=mqtt://broker.example.com:1883
-MQTT_USERNAME=your_username  # Optional
-MQTT_PASSWORD=your_password  # Optional
-```
-
-### How It Works
-
-1. Service subscribes to topic pattern: `iot/sensor/+/temperature`
-2. When a message is received:
-   - Extracts `deviceId` from the topic
-   - Parses JSON payload
-   - Validates temperature value
-   - Saves reading to MongoDB
-
-### Testing MQTT
-
-**Using mosquitto_pub:**
-
-```bash
-# Install mosquitto-clients (if not installed)
-# Ubuntu/Debian: sudo apt-get install mosquitto-clients
-# macOS: brew install mosquitto
-
-# Publish message with timestamp
-mosquitto_pub -h broker.example.com -t "iot/sensor/sensor-01/temperature" \
-  -m '{"temperature": 28.5, "timestamp": 1705312440000}'
-
-# Publish message without timestamp (auto-generated)
-mosquitto_pub -h broker.example.com -t "iot/sensor/sensor-01/temperature" \
-  -m '{"temperature": 28.5}'
-```
-
-**Using MQTT.js (Node.js):**
-
-```javascript
-const mqtt = require('mqtt');
-const client = mqtt.connect('mqtt://broker.example.com');
-
-client.on('connect', () => {
-  client.publish('iot/sensor/sensor-01/temperature', JSON.stringify({
-    temperature: 28.5,
-    timestamp: Date.now()
-  }));
-});
-```
-
----
-
-## 🗄️ Database Schema
+## Database Schema
 
 ### SensorReading Collection
 
@@ -468,17 +343,9 @@ client.on('connect', () => {
 - **Single index** on `timestamp` - Fast timestamp sorting
 - **Compound index** on `(deviceId, timestamp)` - Optimized for latest reading queries
 
-### Viewing Data in MongoDB Atlas
-
-1. Go to MongoDB Atlas dashboard
-2. Click "Browse Collections" on your cluster
-3. Select database: `iot-sensors`
-4. Select collection: `sensorreadings`
-5. View your ingested documents
-
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 iot-sensor-backend/
@@ -493,22 +360,17 @@ iot-sensor-backend/
 │   │   └── sensorRoutes.js      # API route definitions
 │   ├── middleware/
 │   │   └── validation.js        # Input validation middleware
-│   ├── services/
-│   │   └── mqttService.js       # MQTT subscriber service (bonus)
 │   ├── app.js                   # Express app configuration
 │   └── server.js                # Server entry point
 ├── .env.example                 # Environment variables template
 ├── .gitignore                   # Git ignore rules
 ├── package.json                 # Project dependencies and scripts
-├── README.md                    # This file
-└── test-api.ps1                 # PowerShell test script (optional)
+└── README.md                    # This file
 ```
 
 ---
 
-## ⚠️ Error Handling
-
-The API returns consistent error responses:
+## Error Handling
 
 ### Error Response Format
 
@@ -529,47 +391,9 @@ The API returns consistent error responses:
 - **404 Not Found** - Device not found
 - **500 Internal Server Error** - Server/database errors
 
-### Example Error Responses
-
-**Validation Error (400):**
-```json
-{
-  "success": false,
-  "error": "Validation failed",
-  "details": [
-    {
-      "field": "deviceId",
-      "message": "Device ID is required"
-    },
-    {
-      "field": "temperature",
-      "message": "Temperature must be a valid number"
-    }
-  ]
-}
-```
-
-**Not Found (404):**
-```json
-{
-  "success": false,
-  "error": "Not found",
-  "message": "No readings found for device: sensor-99"
-}
-```
-
-**Server Error (500):**
-```json
-{
-  "success": false,
-  "error": "Internal server error",
-  "message": "Database connection failed"
-}
-```
-
 ---
 
-## ✅ Validation Rules
+## Validation Rules
 
 - **deviceId**: 
   - Required
@@ -579,23 +403,21 @@ The API returns consistent error responses:
 - **temperature**: 
   - Required
   - Must be a valid number (integer or float)
-  - No range restrictions
 
 - **timestamp**: 
   - Optional
   - If provided, must be a valid number (epoch milliseconds)
-  - Must be positive and within valid range
   - If not provided, server defaults to `Date.now()`
 
 ---
 
-## 🧪 Testing
+## Testing
 
 ### Quick Test Sequence
 
 1. **Start the server:**
    ```bash
-   npm run dev
+   npm start
    ```
 
 2. **Test health check:**
@@ -647,50 +469,29 @@ curl -X POST http://localhost:3000/api/sensor/ingest \
   -d '{"deviceId": "sensor-01"}'
 ```
 
-**Invalid temperature:**
-```bash
-curl -X POST http://localhost:3000/api/sensor/ingest \
-  -H "Content-Type: application/json" \
-  -d '{"deviceId": "sensor-01", "temperature": "not-a-number"}'
-```
+---
 
-### Automated Testing
+## Technologies Used
 
-A PowerShell test script is included: `test-api.ps1`
-
-**Run tests:**
-```powershell
-.\test-api.ps1
-```
+- **Node.js** 18+ or 20 LTS - Runtime environment
+- **Express.js** - Web framework
+- **Mongoose** - MongoDB ODM
+- **express-validator** - Input validation
+- **dotenv** - Environment variable management
 
 ---
 
-## 🛠️ Technologies Used
-
-- **Node.js** 20 LTS - Runtime environment
-- **Express.js** 4.18+ - Web framework
-- **Mongoose** 8.0+ - MongoDB ODM
-- **express-validator** 7.0+ - Input validation
-- **MQTT.js** 5.3+ - MQTT client library (bonus feature)
-- **dotenv** 16.3+ - Environment variable management
-- **nodemon** 3.0+ - Development auto-reload
-
----
-
-## 📝 Environment Variables
+## Environment Variables
 
 | Variable | Required | Description | Example |
 |----------|----------|-------------|---------|
 | `MONGODB_URI` | Yes | MongoDB Atlas connection string | `mongodb+srv://user:pass@cluster.mongodb.net/iot-sensors?retryWrites=true&w=majority` |
 | `PORT` | No | Server port (default: 3000) | `3000` |
-| `NODE_ENV` | No | Environment (development/production) | `development` |
-| `MQTT_BROKER_URL` | No | MQTT broker URL (bonus feature) | `mqtt://broker.example.com:1883` |
-| `MQTT_USERNAME` | No | MQTT username (optional) | `your_username` |
-| `MQTT_PASSWORD` | No | MQTT password (optional) | `your_password` |
+| `NODE_ENV` | No | Environment | `development` |
 
 ---
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
 ### MongoDB Connection Issues
 
@@ -725,49 +526,14 @@ A PowerShell test script is included: `test-api.ps1`
 npm install
 ```
 
-### Validation Not Working
-
-**Check:**
-- Ensure `Content-Type: application/json` header is set
-- Verify request body is valid JSON
-- Check that required fields are present
-
 ---
 
-## 📄 License
+## License
 
 ISC
 
 ---
 
-## 👤 Author
+## Author
 
-Created for **Falcon Labs Node.js Internship Pre-Assessment Assignment**
-
----
-
-## 📚 Additional Resources
-
-- [MongoDB Atlas Documentation](https://docs.atlas.mongodb.com/)
-- [Express.js Documentation](https://expressjs.com/)
-- [Mongoose Documentation](https://mongoosejs.com/)
-- [MQTT.js Documentation](https://github.com/mqttjs/MQTT.js)
-
----
-
-## ✨ Features Summary
-
-| Feature | Status | Description |
-|---------|--------|-------------|
-| POST /api/sensor/ingest | ✅ | Ingest sensor readings with validation |
-| GET /api/sensor/:deviceId/latest | ✅ | Retrieve latest reading for device |
-| MongoDB Integration | ✅ | Persist data to MongoDB Atlas |
-| Input Validation | ✅ | Validate deviceId and temperature |
-| Timestamp Handling | ✅ | Auto-generate if missing |
-| Error Handling | ✅ | Comprehensive error responses |
-| MQTT Subscriber | ✅ | Bonus feature for real-time ingestion |
-| Health Check | ✅ | Server status endpoint |
-
----
-
-**Ready to use!** Follow the installation steps above to get started. 🚀
+Created for Falcon Labs Node.js Internship Pre-Assessment Assignment
