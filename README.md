@@ -519,15 +519,3 @@ curl -X POST http://localhost:3000/api/sensor/ingest \
 ```bash
 npm install
 ```
-
----
-
-## License
-
-ISC
-
----
-
-## Author
-
-Created for Falcon Labs Node.js Internship Pre-Assessment Assignment
