@@ -248,13 +248,7 @@ Invoke-WebRequest -Uri http://localhost:3000/api/sensor/sensor-01/latest -UseBas
 
 ---
 
-## Postman Collection
-
-### Setting Up Postman
-
-1. **Download Postman** from [https://www.postman.com/downloads/](https://www.postman.com/downloads/)
-
-2. **Create a new Collection:** "IoT Sensor API"
+## Testing on Postman 
 
 ### Request Examples
 
